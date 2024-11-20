@@ -42,8 +42,4 @@ public class Account {
     @Column(name = "last_transaction_time", length = 14)
     private String lastTransactionTime;
 
-    // 핀테크 이용 번호 (예: "123456789012345678901234")
-    // {은행 코드}{핀테크 식별 ID}{고유 사용자 ID}
-    @Column(name = "fintech_use_num", length = 27)
-    private String fintechUseNum;
 }

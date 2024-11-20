@@ -5,9 +5,7 @@ import com.example.bank.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/bank/account")
@@ -18,9 +16,11 @@ public class AccountController {
 
     // 계좌 정보 조회
     @GetMapping("/info")
-    public ResponseEntity<AccountResponseDTO> getAccountInfo() {
-        //AccountResponseDTO accountResponseDTO = accountService.getAccountInfo();
-        return ResponseEntity.ok(null);
+    public ResponseEntity<AccountResponseDTO> getAccountInfo(
+            @RequestParam("accountNumber") String accountNumber
+    ) {
+        AccountResponseDTO accountResponseDTO = accountService.getAccountInfo(accountNumber);
+        return ResponseEntity.ok(accountResponseDTO);
 
     }
 }
