@@ -1,113 +1,94 @@
 package com.example.bank.service;
+
 import com.example.bank.dto.DepositRequestDTO;
 import com.example.bank.dto.WithdrawalRequestDTO;
-import com.example.bank.model.Account;
-import com.example.bank.model.AccountHistory;
-import com.example.bank.model.QAccount;
-import com.example.bank.model.QAccountHistory;
+import com.example.bank.model.*;
 import com.example.bank.repository.AccountHistoryRepository;
+
+import com.example.bank.repository.AccountRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AccountHistoryService {
+
     private final JPAQueryFactory queryFactory;
     private final AccountHistoryRepository accountHistoryRepository;
+    private final AccountRepository accountRepository;
+    private final EntityManager entityManager;
+
     @Transactional
-    ///// 출금
-    public String withdraw(WithdrawalRequestDTO request) {
+    public String withdraw(WithdrawalRequestDTO request, String accountNum) {
         QAccount qAccount = QAccount.account;
-        QAccountHistory qAccountHistory = QAccountHistory.accountHistory;
 
         // 1. 계좌 조회
-        Account account = queryFactory.selectFrom(qAccount)
-                .where(qAccount.cntrAccountNum.eq(request.getAccountNumber()))
+        Account account = queryFactory
+                .selectFrom(qAccount)
+                .where(qAccount.accountNum.eq(accountNum))
                 .fetchOne();
 
         if (account == null) {
-            throw new IllegalArgumentException("존재하지 않는 계좌 " + request.getAccountNumber());
+            throw new IllegalArgumentException("해당 계좌를 찾을 수 없습니다.");
         }
 
-        // 2. 잔액 확인
-        if (account.getBalanceAmt() < request.getAmount()) {
-            throw new IllegalArgumentException("잔액 부족 " + request.getAccountNumber());
+        // 2. 잔액 확인 (withdrawal_card의 amount랑 account의 balanceAmt랑 비교)
+        BigDecimal balanceAmt = account.getBalanceAmt();
+        BigDecimal withdrawalAmount = request.getCard().getAmount();
+
+        if (balanceAmt.compareTo(withdrawalAmount) < 0) {
+            throw new IllegalArgumentException("잔액이 부족합니다.");
         }
 
-        // 3. 잔액 차감
-        account.setBalanceAmt(account.getBalanceAmt() - request.getAmount());
+        // 3. 잔액 차감 (account 업데이트)
+        BigDecimal updatedBalance = balanceAmt.subtract(withdrawalAmount);
+        account.setBalanceAmt(updatedBalance);
 
-        // 거래 내역 생성
-        AccountHistory history = new AccountHistory();
-        history.setApiTranDtm(request.getApiTranDtm());
-        history.setAccount(account);
-        history.setTranDate(request.getApiTranDtm().substring(0, 8));
-        history.setTranTime(request.getApiTranDtm().substring(8));
-        history.setInoutType("출금");
-        history.setTranAmt(request.getAmount());
-        history.setAfterBalanceAmt(account.getBalanceAmt());
-        history.setPrintContent(request.getPrintContent());
-        history.setTranStatus("SUCCESS");
-        history.setTranType(request.getTranType());
+        // 4. 출금 내역 생성 및 저장
+        WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
+        withdrawalHistory.setAccount(account);
+        withdrawalHistory.setMId(request.getMId());
+        withdrawalHistory.setCurrency("KRW");
+        withdrawalHistory.setMethod(request.getMethod());
+        withdrawalHistory.setApprovedAt(LocalDateTime.now());
+        withdrawalHistory.setSoldDate(request.getSoldDate());
+        withdrawalHistory.setPaidOutDate(request.getPaidOutDate());
+        withdrawalHistory.setCard(request.getCard());
 
-        // 거래 내역 저장
-        accountHistoryRepository.save(history);
+        // 5. 수수료 저장 및 연결
+        List<Withdrawal_fee> fees = new ArrayList<>();
+        for (Withdrawal_fee fee : request.getFees()) {
+            Withdrawal_fee managedFee = fee.getId() != null
+                    ? entityManager.merge(fee) // 이미 존재하는 수수료는 merge
+                    : fee; // 새로운 수수료는 그대로 사용
+            fees.add(managedFee);
+        }
+        withdrawalHistory.setFees(fees);
 
-        // 계좌 정보 업데이트
-        queryFactory.update(QAccount.account)
-                .where(QAccount.account.cntrAccountNum.eq(request.getAccountNumber()))
-                .set(QAccount.account.balanceAmt, account.getBalanceAmt())
-                .execute();
+        accountHistoryRepository.save(withdrawalHistory);
 
-        return "출금 완료: " + request.getAccountNumber();
+        // 5. 변경된 계좌 저장
+        accountRepository.save(account);
+
+        // 6. 성공 메시지 반환
+        return "출금이 성공적으로 완료되었습니다.";
     }
 
 
-    ///// 입금
     @Transactional
     public String deposit(DepositRequestDTO request) {
-        QAccount qAccount = QAccount.account;
-
-        // 1. 계좌 조회
-        Account account = queryFactory.selectFrom(qAccount)
-                .where(qAccount.cntrAccountNum.eq(request.getAccountNumber()))
-                .fetchOne();
-
-        if (account == null) {
-            throw new IllegalArgumentException("존재하지 않는 계좌: " + request.getAccountNumber());
-        }
-
-        // 2. 잔액 증가
-        account.setBalanceAmt(account.getBalanceAmt() + request.getAmount());
-
-        // 거래 내역 생성
-        AccountHistory history = new AccountHistory();
-        history.setApiTranDtm(request.getApiTranDtm());
-        history.setAccount(account);
-        history.setTranDate(request.getApiTranDtm().substring(0, 8)); // yyyyMMdd
-        history.setTranTime(request.getApiTranDtm().substring(8));   // HHmmss
-        history.setInoutType("입금");
-        history.setTranAmt(request.getAmount());
-        history.setAfterBalanceAmt(account.getBalanceAmt());
-        history.setPrintContent(request.getPrintContent());
-        history.setTranStatus("SUCCESS");
-        history.setTranType(request.getTranType());
-
-        // 거래 내역 저장
-        accountHistoryRepository.save(history);
-
-        // 계좌 정보 업데이트
-        queryFactory.update(QAccount.account)
-                .where(QAccount.account.cntrAccountNum.eq(request.getAccountNumber()))
-                .set(QAccount.account.balanceAmt, account.getBalanceAmt())
-                .execute();
-
-        return "입금 완료: " + request.getAccountNumber();
+        return "";
     }
-
 }

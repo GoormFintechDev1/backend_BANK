@@ -18,8 +18,11 @@ public class AccountHistoryController {
 
     // 출금
     @PostMapping("/withdrawal")
-    public ResponseEntity<String> withdraw(@RequestBody WithdrawalRequestDTO request) {
-        accountHistoryService.withdraw(request);
+    public ResponseEntity<String> withdraw(
+            @RequestBody WithdrawalRequestDTO request,
+            @RequestParam String accountNum
+            ) {
+        accountHistoryService.withdraw(request, accountNum);
         return ResponseEntity.ok("출금 성공");
     }
 
@@ -29,5 +32,4 @@ public class AccountHistoryController {
        accountHistoryService.deposit(request);
         return ResponseEntity.ok("입금 성공");
     }
-
 }

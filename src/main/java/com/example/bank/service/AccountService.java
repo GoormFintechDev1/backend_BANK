@@ -20,7 +20,7 @@ public class AccountService {
 
         // 계좌 정보 조회
         Account account = queryFactory.selectFrom(qAccount)
-                .where(qAccount.cntrAccountNum.eq(accountNumber))
+                .where(qAccount.accountNum.eq(accountNumber))
                 .fetchOne();
 
         if (account == null) {
@@ -29,7 +29,7 @@ public class AccountService {
 
         // DTO로 매핑하여 반환
         return new AccountResponseDTO(
-                account.getCntrAccountNum(),
+                account.getAccountNum(),
                 account.getAccountHolderName(),
                 account.getBankCode().getBankCode(),
                 account.getBankCode().getBankName(),
@@ -38,4 +38,6 @@ public class AccountService {
                 account.getLastTransactionTime()
         );
     }
+
+
 }

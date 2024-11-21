@@ -21,15 +21,14 @@ INSERT INTO bank_code (bank_code, bank_name, bank_alias) VALUES
 
 # account
 INSERT INTO account (
-    cntr_account_num,
+    account_num,
     account_holder_name,
     bank_code,
     balance_amt,
     account_status,
-    last_transaction_time,
-    fintech_use_num
+    last_transaction_time
 ) VALUES
-    ('110123456789', '이민수', '001', 1500000, 'ACTIVE', '20241120120000', '00112345678901234567890123');
+    ('110123456789', '이민수', '001', 1500000, 'ACTIVE', '20241120120000');
 
 
 
