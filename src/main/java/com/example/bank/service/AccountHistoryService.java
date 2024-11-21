@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,7 +65,7 @@ public class AccountHistoryService {
         withdrawalHistory.setMId(request.getMId());
         withdrawalHistory.setCurrency("KRW");
         withdrawalHistory.setMethod(request.getMethod());
-        withdrawalHistory.setApprovedAt(LocalDateTime.now());
+        withdrawalHistory.setApprovedAt(OffsetDateTime.now());
         withdrawalHistory.setSoldDate(request.getSoldDate());
         withdrawalHistory.setPaidOutDate(request.getPaidOutDate());
         withdrawalHistory.setCard(request.getCard());

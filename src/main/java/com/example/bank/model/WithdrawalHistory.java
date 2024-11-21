@@ -1,5 +1,6 @@
 package com.example.bank.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.AllArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 
@@ -53,7 +55,7 @@ public class WithdrawalHistory {
 
     // 승인일
     @Column(name = "approved_at")
-    private LocalDateTime approvedAt;
+    private OffsetDateTime approvedAt;
 
     // 판매일
     @Column(name = "sold_date")

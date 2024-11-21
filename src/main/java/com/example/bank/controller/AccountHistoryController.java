@@ -21,6 +21,7 @@ public class AccountHistoryController {
     @PostMapping("/withdrawal")
     public ResponseEntity<String> withdraw(
             @RequestParam String accountNum
+
     ) {
         // 외부 API 호출
         String externalApiUrl = "http://localhost:8083/pos/toss";

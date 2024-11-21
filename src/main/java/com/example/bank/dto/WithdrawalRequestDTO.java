@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class WithdrawalRequestDTO {
     // 카드 정보
     private Withdrawal_card card;
     // 승인일
-    private LocalDateTime approvedAt;
+    private OffsetDateTime approvedAt;
     // 판매일
     private LocalDate soldDate;
     // 결제일
