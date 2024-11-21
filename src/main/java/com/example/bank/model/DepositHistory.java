@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -24,5 +26,7 @@ public class DepositHistory {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-
+    // 입금 금액
+    @Column(name = "amount")
+    private BigDecimal amount;
 }

@@ -3,9 +3,10 @@ package com.example.bank.service;
 import com.example.bank.dto.DepositRequestDTO;
 import com.example.bank.dto.WithdrawalRequestDTO;
 import com.example.bank.model.*;
-import com.example.bank.repository.AccountHistoryRepository;
 
 import com.example.bank.repository.AccountRepository;
+import com.example.bank.repository.DepositRepository;
+import com.example.bank.repository.WithdrawalRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -26,7 +27,8 @@ import java.time.LocalDateTime;
 public class AccountHistoryService {
 
     private final JPAQueryFactory queryFactory;
-    private final AccountHistoryRepository accountHistoryRepository;
+    private final WithdrawalRepository withdrawalRepository;
+    private final DepositRepository depositRepository;
     private final AccountRepository accountRepository;
     private final EntityManager entityManager;
 
@@ -77,7 +79,7 @@ public class AccountHistoryService {
         }
         withdrawalHistory.setFees(fees);
 
-        accountHistoryRepository.save(withdrawalHistory);
+        withdrawalRepository.save(withdrawalHistory);
 
         // 5. 변경된 계좌 저장
         accountRepository.save(account);
@@ -88,7 +90,35 @@ public class AccountHistoryService {
 
 
     @Transactional
-    public String deposit(DepositRequestDTO request) {
-        return "";
+    public String deposit(DepositRequestDTO request, String accountNum) {
+        QAccount qAccount = QAccount.account;
+
+        // 1. 계좌 조회
+        Account account = queryFactory
+                .selectFrom(qAccount)
+                .where(qAccount.accountNum.eq(accountNum))
+                .fetchOne();
+
+        if (account == null) {
+            throw new IllegalArgumentException("해당 계좌를 찾을 수 없습니다.");
+        }
+
+        // 2. 잔액 추가 (account 업데이트)
+        BigDecimal balanceAmt = account.getBalanceAmt();
+        BigDecimal updatedBalance = balanceAmt.add(request.getAmount());
+        account.setBalanceAmt(updatedBalance);
+
+        // 4. 출금 내역 생성 및 저장
+        DepositHistory depositHistory = new DepositHistory();
+        depositHistory.setAccount(account);
+        depositHistory.setAmount(request.getAmount());
+
+        depositRepository.save(depositHistory);
+
+        // 5. 변경된 계좌 저장
+        accountRepository.save(account);
+
+        // 6. 성공 메시지 반환
+        return "송금이 성공적으로 완료되었습니다.";
     }
 }

@@ -28,8 +28,11 @@ public class AccountHistoryController {
 
     // 입금
     @PostMapping("/deposit")
-    public ResponseEntity<String> deposit(@RequestBody DepositRequestDTO request) {
-       accountHistoryService.deposit(request);
+    public ResponseEntity<String> deposit(
+            @RequestBody DepositRequestDTO request,
+            @RequestParam String accountNum
+    ) {
+       accountHistoryService.deposit(request,accountNum);
         return ResponseEntity.ok("입금 성공");
     }
 }
