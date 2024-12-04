@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 public class OrderResponseDTO {
     private Long orderId;
-    private int totalPrice;//
+    private int totalPrice;
     private String productName;
     private int quantity;
     private List<OrderItemDTO> orderItems;

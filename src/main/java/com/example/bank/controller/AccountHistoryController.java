@@ -77,7 +77,7 @@ public class AccountHistoryController {
     public void deposit() {
         // 외부 API 호출
         String externalApiUrl = "http://localhost:8083/api/orders/send";
-        OrderResponseDTO request = webClient.post()
+        List<OrderResponseDTO> request = (List<OrderResponseDTO>) webClient.post()
                 .uri(externalApiUrl)
                 .retrieve()
                 .bodyToMono(OrderResponseDTO.class)
