@@ -34,7 +34,7 @@ public class AccountHistoryService {
 
         // QueryDSL을 사용하여 brNum으로 계좌 검색
         connectedAccount = queryFactory.selectFrom(account)
-                .where(account.brNum.eq(brNum))
+                .where(account.accountId.eq(1L)) // accountId가 1번인 계좌로 고정
                 .fetchOne();
 
         if (connectedAccount == null) {
