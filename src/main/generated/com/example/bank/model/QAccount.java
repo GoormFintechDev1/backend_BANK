@@ -19,6 +19,8 @@ public class QAccount extends EntityPathBase<Account> {
 
     public static final QAccount account = new QAccount("account");
 
+    public final QBaseTime _super = new QBaseTime(this);
+
     public final NumberPath<Long> accountId = createNumber("accountId", Long.class);
 
     public final StringPath accountNumber = createString("accountNumber");
@@ -26,6 +28,17 @@ public class QAccount extends EntityPathBase<Account> {
     public final NumberPath<java.math.BigDecimal> balance = createNumber("balance", java.math.BigDecimal.class);
 
     public final StringPath bankName = createString("bankName");
+
+    public final StringPath brNum = createString("brNum");
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdAt = _super.createdAt;
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> deletedAt = _super.deletedAt;
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;
 
     public QAccount(String variable) {
         super(Account.class, forVariable(variable));

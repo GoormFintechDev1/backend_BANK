@@ -1,9 +1,11 @@
 package com.example.bank.service;
 
+import com.example.bank.dto.OrderResponseDTO;
+import com.example.bank.dto.PaymentResponseDTO;
 import com.example.bank.model.*;
+import com.example.bank.model.enumSet.TransactionTypeEnum;
+import com.example.bank.repository.AccountHistoryRepository;
 import com.example.bank.repository.AccountRepository;
-import com.example.bank.repository.DepositRepository;
-import com.example.bank.repository.WithdrawalRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,124 +23,105 @@ import java.time.LocalDateTime;
 public class AccountHistoryService {
 
     private final JPAQueryFactory queryFactory;
-    private final WithdrawalRepository withdrawalRepository;
-    private final DepositRepository depositRepository;
     private final AccountRepository accountRepository;
+    private final AccountHistoryRepository accountHistoryRepository;
     private final WebClient webClient; // 외부 API 호출을 위한 WebClient
 
     private Account connectedAccount; // connect 메서드로 찾은 계좌를 저장
 
-    /// 계좌 연결 확인
-    @Transactional
-    public boolean connect(String accountNum) {
-        String apiServerUrl = "http://localhost:8080/api/account/info";
+    public Account checkAccount(String brNum) {
+        QAccount account = QAccount.account;
 
-        try {
-            // Step 1: API 호출 시작
-            log.info("외부 API 호출 준비: {}", apiServerUrl); // URL 로그
-            log.info("계좌 번호: {}", accountNum); // 입력된 계좌 번호 로그
+        // QueryDSL을 사용하여 brNum으로 계좌 검색
+        connectedAccount = queryFactory.selectFrom(account)
+                .where(account.brNum.eq(brNum))
+                .fetchOne();
 
-            // Step 2: WebClient 설정
-            WebClient webClient = WebClient.builder()
-                    .baseUrl("http://localhost:8080")  // 기본 URL 설정
-                    .build();
-            log.info("WebClient 구성 완료");
-
-            // Step 3: API 호출
-            log.info("외부 API 호출 시작: {}?accountNum={}", apiServerUrl, accountNum); // 전체 URL 로그
-
-            connectedAccount = webClient.get()
-                    .uri(uriBuilder -> {
-                        log.info("URI 빌더 실행"); // URI 빌더 실행 로그
-                        return uriBuilder
-                                .path("/api/account/info")  // 상대 경로 설정
-                                .queryParam("accountNum", accountNum)  // 쿼리 파라미터 추가
-                                .build();
-                    })
-                    .retrieve()
-                    .bodyToMono(Account.class)
-                    .doOnSubscribe(subscription -> log.info("외부 API 요청 구독 시작")) // 구독 시작 로그
-                    .doOnNext(response -> log.info("외부 API 응답 수신: {}", response)) // 응답 수신 로그
-                    .doOnError(error -> log.error("외부 API 호출 중 오류 발생: {}", error.getMessage())) // 오류 로그
-                    .block();
-
-            // Step 4: API 호출 성공
-            if (connectedAccount != null) {
-                log.info("외부 API 호출 성공: {}", connectedAccount); // 성공 메시지 추가
-            } else {
-                log.warn("외부 API 호출 성공했지만 결과가 null입니다.");
-            }
-
-            return true;
-
-        } catch (Exception e) {
-            // Step 5: 예외 발생 시 로그
-            log.error("외부 API 호출 중 예외 발생: {}", e.getMessage(), e);
-            throw new IllegalArgumentException("외부 API에서 계좌 정보를 가져올 수 없습니다.", e);
-        } finally {
-            // Step 6: 메서드 종료 로그
-            log.info("connect 메서드 종료");
+        if (connectedAccount == null) {
+           log.info("계좌를 찾을 수 없습니다 : {}", brNum);
         }
+
+        return connectedAccount;
     }
 
-    // 출금
+
+    // 계좌별 거래 내역 조회
+    public List<AccountHistory> getConnectedAccountHistory(Long accountId) {
+        QAccountHistory accountHistory = QAccountHistory.accountHistory;
+
+        return queryFactory.selectFrom(accountHistory)
+                .where(accountHistory.account.accountId.eq(accountId))
+                .orderBy(accountHistory.transactionDate.desc()) // 거래일 내림차순 정렬
+                .fetch();
+    }
+
+    // 기존에 작성된 getConnectedAccount 메서드 사용
+    public Account getConnectedAccount() {
+        if (connectedAccount == null) {
+            throw new IllegalStateException("No account is connected.");
+        }
+        return connectedAccount;
+    }
+
     @Transactional
-    public String withdraw(WithdrawalRequestDTO request) {
+    public String withdraw(List<PaymentResponseDTO> requests) {
         // 연결된 계좌 확인
         if (connectedAccount == null) {
             throw new IllegalStateException("먼저 계좌를 연결해야 합니다.");
         }
 
-        // 잔액 확인
-        BigDecimal balanceAmt = connectedAccount.getBalance();
-        Long withdrawalAmount = request.getTotalAmount();
-        if (balanceAmt.compareTo(BigDecimal.valueOf(withdrawalAmount)) < 0) {
-            throw new IllegalArgumentException("잔액이 부족합니다. 현재 잔액: " + balanceAmt);
+        BigDecimal totalWithdrawalAmount = BigDecimal.ZERO;
+
+        for (PaymentResponseDTO request : requests) {
+            // 잔액 확인
+            BigDecimal balanceAmt = connectedAccount.getBalance();
+            Long withdrawalAmount = request.getTotalAmount();
+
+            if (balanceAmt.compareTo(BigDecimal.valueOf(withdrawalAmount)) < 0) {
+                throw new IllegalArgumentException("잔액이 부족합니다. 현재 잔액: " + balanceAmt);
+            }
+
+            // 출금 내역 생성 및 저장
+            AccountHistory accountHistory = new AccountHistory();
+            accountHistory.setAccount(connectedAccount);
+            accountHistory.setAmount(BigDecimal.valueOf(withdrawalAmount));
+            accountHistory.setTransactionType(TransactionTypeEnum.valueOf("Expense")); // 거래 유형 설정
+            accountHistory.setTransactionDate(LocalDateTime.now());
+            accountHistoryRepository.save(accountHistory);
+
+            // 잔액 차감
+            BigDecimal updatedBalance = balanceAmt.subtract(BigDecimal.valueOf(withdrawalAmount));
+            connectedAccount.setBalance(updatedBalance);
+
+            totalWithdrawalAmount = totalWithdrawalAmount.add(BigDecimal.valueOf(withdrawalAmount));
         }
-
-        // 출금 내역 생성 및 저장
-        WithdrawalHistory withdrawalHistory = new WithdrawalHistory();
-        withdrawalHistory.setAccount(connectedAccount);
-        withdrawalHistory.setVat(request.getVat());
-        withdrawalHistory.setCreatedAt(request.getCreatedAt() != null ? request.getCreatedAt() : LocalDateTime.now());
-        withdrawalHistory.setApprovedAt(request.getApprovedAt() != null ? request.getApprovedAt() : String.valueOf(LocalDateTime.now()));
-        withdrawalHistory.setCurrency(request.getCurrency());
-        withdrawalHistory.setOrderName(request.getOrderName());
-
-        withdrawalRepository.save(withdrawalHistory);
-
-        // 잔액 차감
-        BigDecimal updatedBalance = balanceAmt.subtract(BigDecimal.valueOf(withdrawalAmount));
-        connectedAccount.setBalance(updatedBalance);
-
-
 
         // 변경된 계좌 저장
         accountRepository.save(connectedAccount);
 
-        return "출금이 성공적으로 완료되었습니다. 현재 잔액: " + updatedBalance;
+        return "출금이 성공적으로 완료되었습니다. 총 출금 금액: " + totalWithdrawalAmount
+                + "원, 현재 잔액: " + connectedAccount.getBalance() + "원";
     }
+
 
     // 입금
     @Transactional
-    public String deposit(DepositRequestDTO request) {
+    public String deposit(OrderResponseDTO request) {
         // 연결된 계좌 확인
         if (connectedAccount == null) {
             throw new IllegalStateException("먼저 계좌를 연결해야 합니다.");
         }
 
         // 입금 내역 생성 및 저장
-        DepositHistory depositHistory = new DepositHistory();
-        depositHistory.setAccount(connectedAccount);
-        depositHistory.setOrderId(request.getOrderId());
-        depositHistory.setTotalPrice(request.getTotalPrice());
-        depositHistory.setProductName(request.getProductName());
-        depositHistory.setQuantity(request.getQuantity());
-        depositHistory.setOrderDate(request.getOrderDate() != null ? request.getOrderDate() : LocalDateTime.now());
-        depositHistory.setOrderStatus(request.getOrderStatus());
-        depositHistory.setPaymentStatus(request.getPaymentStatus());
+        AccountHistory accountHistory = new AccountHistory();
+        accountHistory.setAccount(connectedAccount);
+        accountHistory.setTransactionType(TransactionTypeEnum.valueOf("Revenue"));
+        accountHistory.setTransactionDate(request.getOrderDate());
+        accountHistory.setAmount(BigDecimal.valueOf(request.getTotalPrice()));
+        accountHistory.setStoreName(request.getProductName());
 
-        depositRepository.save(depositHistory);
+
+        accountHistoryRepository.save(accountHistory);
 
 
         // 잔액 추가

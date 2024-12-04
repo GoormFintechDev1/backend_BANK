@@ -32,6 +32,6 @@ public class Account extends BaseTime {
     private BigDecimal balance;
 
     // 외부API에서 받아온 사업자 번호 (초기 인증용)
-    @Column(name = "br_num", nullable = false, unique = true)
+    @Column(name = "br_num", nullable = true, unique = true)
     private String brNum;
 }
