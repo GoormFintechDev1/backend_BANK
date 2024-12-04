@@ -56,18 +56,24 @@ public class AccountHistoryService {
     }
     // 기존에 작성된 getConnectedAccount 메서드 사용
     public Account getConnectedAccount() {
-        if (connectedAccount == null) {
-            throw new IllegalStateException("No account is connected.");
-        }
+        QAccount account = QAccount.account;
+        // QueryDSL을 사용하여 brNum으로 계좌 검색
+        connectedAccount = queryFactory.selectFrom(account)
+                .where(account.accountId.eq(1L)) // accountId가 1번인 계좌로 고정
+                .fetchOne();
+
         return connectedAccount;
     }
 
     /////////// pos
     @Transactional
     public String withdraw(List<PaymentResponseDTO> requests) {
-        if (connectedAccount == null) {
-            throw new IllegalStateException("먼저 계좌를 연결해야 합니다.");
-        }
+        QAccount account = QAccount.account;
+        // QueryDSL을 사용하여 brNum으로 계좌 검색
+        connectedAccount = queryFactory.selectFrom(account)
+                .where(account.accountId.eq(1L)) // accountId가 1번인 계좌로 고정
+                .fetchOne();
+
 
         BigDecimal totalWithdrawalAmount = BigDecimal.ZERO;
 
@@ -121,9 +127,12 @@ public class AccountHistoryService {
     @Transactional
     public String deposit(List<OrderResponseDTO> requests) {
         // 연결된 계좌 확인
-        if (connectedAccount == null) {
-            throw new IllegalStateException("먼저 계좌를 연결해야 합니다.");
-        }
+        QAccount account = QAccount.account;
+        // QueryDSL을 사용하여 brNum으로 계좌 검색
+        connectedAccount = queryFactory.selectFrom(account)
+                .where(account.accountId.eq(1L)) // accountId가 1번인 계좌로 고정
+                .fetchOne();
+
 
         BigDecimal totalDepositedAmount = BigDecimal.ZERO; // 총 입금 금액 추적
 
