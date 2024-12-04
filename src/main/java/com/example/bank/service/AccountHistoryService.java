@@ -120,34 +120,22 @@ public class AccountHistoryService {
     // 입금
     @Transactional
     public String deposit(List<OrderResponseDTO> requests) {
+        // 연결된 계좌 확인
         if (connectedAccount == null) {
             throw new IllegalStateException("먼저 계좌를 연결해야 합니다.");
         }
 
-        BigDecimal totalDepositedAmount = BigDecimal.ZERO;
+        BigDecimal totalDepositedAmount = BigDecimal.ZERO; // 총 입금 금액 추적
 
         for (OrderResponseDTO request : requests) {
-            // 중복 데이터 확인 (TransactionDate 기준)
-            LocalDateTime transactionDate = request.getOrderDate();
-            boolean exists = accountHistoryRepository.existsByAccountAndTransactionDate(
-                    connectedAccount, transactionDate);
-            if (exists) {
-                log.info("이미 처리된 거래입니다. TransactionDate: {}", transactionDate);
-                continue; // 중복된 거래는 처리하지 않음
-            }
-
             // 입금 내역 생성 및 저장
-            AccountHistory accountHistory = AccountHistory.builder()
-                    .account(connectedAccount)
-                    .transactionType(String.valueOf(TransactionTypeEnum.REVENUE))
-                    .transactionMeans(String.valueOf(TransactionMeansEnum.CASH))
-                    .transactionDate(transactionDate)
-                    .amount(BigDecimal.valueOf(request.getTotalPrice()))
-                    .storeName(request.getProductName())
-                    .note("입금 처리")
-                    .fixedExpenses(false)
-                    .category("POS 입금")
-                    .build();
+            AccountHistory accountHistory = new AccountHistory();
+            accountHistory.setAccount(connectedAccount);
+            accountHistory.setTransactionType(TransactionTypeEnum.valueOf("Revenue"));
+            accountHistory.setTransactionDate(request.getOrderDate());
+            accountHistory.setAmount(BigDecimal.valueOf(request.getTotalPrice()));
+            accountHistory.setStoreName(request.getProductName());
+
             accountHistoryRepository.save(accountHistory);
 
             // 잔액 추가
@@ -155,13 +143,13 @@ public class AccountHistoryService {
             BigDecimal updatedBalance = balanceAmt.add(BigDecimal.valueOf(request.getTotalPrice()));
             connectedAccount.setBalance(updatedBalance);
 
+            // 변경된 계좌 저장
+            accountRepository.save(connectedAccount);
+
             totalDepositedAmount = totalDepositedAmount.add(BigDecimal.valueOf(request.getTotalPrice()));
         }
 
-        accountRepository.save(connectedAccount);
-
-        return "입금이 성공적으로 완료되었습니다. 총 입금 금액: " + totalDepositedAmount
-                + "원, 현재 잔액: " + connectedAccount.getBalance() + "원";
+        return "입금이 성공적으로 완료되었습니다. 총 입금 금액: " + totalDepositedAmount + "원, 현재 잔액: " + connectedAccount.getBalance() + "원";
     }
 
 }

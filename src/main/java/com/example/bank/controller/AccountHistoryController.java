@@ -7,6 +7,7 @@ import com.example.bank.model.AccountHistory;
 import com.example.bank.service.AccountHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ public class AccountHistoryController {
     private final WebClient webClient;
 
 
-    ///////////// 사업자 번호 입력 시 불러오기
+    ///////////// 사업자 번호 입력 시 불러오기 (연결되면 accountId를 넘겨주고, 메인에서 그걸 business와 연결하기 )
     // 사업자 번호 가져오기 ------- 최초 1회
     @GetMapping("/check/account")
     public ResponseEntity<Account> checkAccount(
@@ -62,7 +63,7 @@ public class AccountHistoryController {
         List<PaymentResponseDTO> request = (List<PaymentResponseDTO>) webClient.post()
                 .uri(externalApiUrl)
                 .retrieve()
-                .bodyToMono(PaymentResponseDTO.class)
+                .bodyToMono(new ParameterizedTypeReference<List<PaymentResponseDTO>>() {})
                 .block();
 
         if (request == null) {
@@ -76,11 +77,11 @@ public class AccountHistoryController {
     @Scheduled(fixedRate = 10000)
     public void deposit() {
         // 외부 API 호출
-        String externalApiUrl = "http://localhost:8083/api/orders/send";
-        List<OrderResponseDTO> request = (List<OrderResponseDTO>) webClient.post()
+        String externalApiUrl = "http://localhost:8083/api/orders/all";
+        List<OrderResponseDTO> request = (List<OrderResponseDTO>) webClient.get()
                 .uri(externalApiUrl)
                 .retrieve()
-                .bodyToMono(OrderResponseDTO.class)
+                .bodyToMono(new ParameterizedTypeReference<List<OrderResponseDTO>>() {})
                 .block();
 
         if (request == null) {
