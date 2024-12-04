@@ -128,13 +128,16 @@ public class AccountHistoryService {
         BigDecimal totalDepositedAmount = BigDecimal.ZERO; // 총 입금 금액 추적
 
         for (OrderResponseDTO request : requests) {
-            // 입금 내역 생성 및 저장
-            AccountHistory accountHistory = new AccountHistory();
-            accountHistory.setAccount(connectedAccount);
-            accountHistory.setTransactionType(TransactionTypeEnum.valueOf("Revenue"));
-            accountHistory.setTransactionDate(request.getOrderDate());
-            accountHistory.setAmount(BigDecimal.valueOf(request.getTotalPrice()));
-            accountHistory.setStoreName(request.getProductName());
+
+            // 출금 내역 생성 및 저장
+            AccountHistory accountHistory = AccountHistory.builder()
+                    .account(connectedAccount)
+                    .transactionType(String.valueOf(TransactionTypeEnum.REVENUE))
+                    .transactionMeans(String.valueOf(TransactionMeansEnum.CARD))
+                    .transactionDate(request.getOrderDate())
+                    .amount(BigDecimal.valueOf(request.getTotalPrice()))
+                    .storeName(request.getProductName())
+                    .build();
 
             accountHistoryRepository.save(accountHistory);
 
