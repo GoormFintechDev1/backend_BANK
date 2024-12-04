@@ -91,9 +91,6 @@ public class AccountHistoryService {
             BigDecimal balanceAmt = connectedAccount.getBalance();
             Long withdrawalAmount = request.getTotalAmount();
 
-            if (balanceAmt.compareTo(BigDecimal.valueOf(withdrawalAmount)) < 0) {
-                throw new IllegalArgumentException("잔액이 부족합니다. 현재 잔액: " + balanceAmt);
-            }
 
             // 출금 내역 생성 및 저장
             AccountHistory accountHistory = AccountHistory.builder()
@@ -107,7 +104,12 @@ public class AccountHistoryService {
                     .fixedExpenses(false)
                     .category("POS 출금")
                     .build();
+
             accountHistoryRepository.save(accountHistory);
+
+            if (balanceAmt.compareTo(BigDecimal.valueOf(withdrawalAmount)) < 0) {
+                throw new IllegalArgumentException("잔액이 부족합니다. 현재 잔액: " + balanceAmt);
+            }
 
             // 잔액 차감
             BigDecimal updatedBalance = balanceAmt.subtract(BigDecimal.valueOf(withdrawalAmount));
@@ -138,7 +140,7 @@ public class AccountHistoryService {
 
         for (OrderResponseDTO request : requests) {
 
-            // 출금 내역 생성 및 저장
+          /*  // 출금 내역 생성 및 저장
             AccountHistory accountHistory = AccountHistory.builder()
                     .account(connectedAccount)
                     .transactionType(String.valueOf(TransactionTypeEnum.REVENUE))
@@ -148,7 +150,7 @@ public class AccountHistoryService {
                     .storeName(request.getProductName())
                     .build();
 
-            accountHistoryRepository.save(accountHistory);
+            accountHistoryRepository.save(accountHistory);*/
 
             // 잔액 추가
             BigDecimal balanceAmt = connectedAccount.getBalance();
