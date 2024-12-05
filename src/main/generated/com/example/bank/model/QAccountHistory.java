@@ -40,7 +40,7 @@ public class QAccountHistory extends EntityPathBase<AccountHistory> {
 
     public final EnumPath<com.example.bank.model.enumSet.TransactionMeansEnum> transactionMeans = createEnum("transactionMeans", com.example.bank.model.enumSet.TransactionMeansEnum.class);
 
-    public final EnumPath<com.example.bank.model.enumSet.TransactionTypeEnum> transactionType = createEnum("transactionType", com.example.bank.model.enumSet.TransactionTypeEnum.class);
+    public final StringPath transactionType = createString("transactionType");
 
     public QAccountHistory(String variable) {
         this(AccountHistory.class, forVariable(variable), INITS);

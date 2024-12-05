@@ -102,7 +102,7 @@ public class AccountHistoryService {
             // 출금 내역 생성 및 저장
             AccountHistory accountHistory = AccountHistory.builder()
                     .account(connectedAccount)
-                    .transactionType(TransactionTypeEnum.EXPENSE.name())
+                    .transactionType("EXPENSE")
                     .transactionMeans(TransactionMeansEnum.CARD.name())
                     .transactionDate(transactionDate)
                     .amount(withdrawalAmount)
@@ -150,9 +150,12 @@ public class AccountHistoryService {
             // 입금 내역 생성 및 저장
             AccountHistory accountHistory = AccountHistory.builder()
                     .account(connectedAccount)
-                    .transactionType(TransactionTypeEnum.REVENUE.name())
+                    .transactionType("REVENUE")
                     .transactionMeans(TransactionMeansEnum.CARD.name())
                     .transactionDate(transactionDate)
+                    .category("pos 입금")
+                    .fixedExpenses(false)
+                    .note("pos 입금")
                     .amount(depositAmount)
                     .storeName(request.getProductName())
                     .build();
