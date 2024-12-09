@@ -135,7 +135,7 @@ public class AccountHistoryService {
             boolean exists = queryFactory.selectOne()
                     .from(QAccountHistory.accountHistory)
                     .where(QAccountHistory.accountHistory.account.eq(connectedAccount)
-                            .and(QAccountHistory.accountHistory.note.eq(paymentKey)))
+                            .and(QAccountHistory.accountHistory.transactionDate.eq(transactionDate)))
                     .fetchFirst() != null;
 
             if (exists) {
