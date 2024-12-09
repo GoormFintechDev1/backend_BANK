@@ -67,6 +67,56 @@ public class AccountHistoryService {
                 .fetch();
     }
 
+
+    // 카테고리를 필터링하는 메서드
+    private String filterCategoryByOrderName(String orderName) {
+        if (orderName == null || orderName.isEmpty()) {
+            return "기타"; // 기본 카테고리
+        }
+
+        orderName = orderName.toLowerCase(); // 소문자로 변환하여 비교
+
+        // 공과금 관련 키워드
+        if (orderName.contains("전기") || orderName.contains("가스") || orderName.contains("수도") || orderName.contains("통신") || orderName.contains("세금") || orderName.contains("공과금")) {
+            return "공과금";
+        }
+
+        // 재료비 관련 키워드
+        if (orderName.contains("원두") || orderName.contains("커피") || orderName.contains("재료") || orderName.contains("밀가루") || orderName.contains("설탕") || orderName.contains("베이킹") || orderName.contains("음료")) {
+            return "재료비";
+        }
+
+        // 마케팅/광고 관련 키워드
+        if (orderName.contains("광고") || orderName.contains("sns") || orderName.contains("마케팅") || orderName.contains("홍보")) {
+            return "마케팅";
+        }
+
+        // 시설 관리 관련 키워드
+        if (orderName.contains("수리") || orderName.contains("청소") || orderName.contains("에어컨") || orderName.contains("시설") || orderName.contains("관리")) {
+            return "시설관리";
+        }
+
+        // 급여 관련 키워드
+        if (orderName.contains("급여") || orderName.contains("월급") || orderName.contains("연봉") || orderName.contains("상여금")) {
+            return "급여";
+        }
+
+        // 교통비 관련 키워드
+        if (orderName.contains("택시") || orderName.contains("교통") || orderName.contains("버스") || orderName.contains("지하철")) {
+            return "교통비";
+        }
+
+        // 식비 관련 키워드
+        if (orderName.contains("식비") || orderName.contains("음식") || orderName.contains("저녁") || orderName.contains("점심") || orderName.contains("간식") || orderName.contains("식사")) {
+            return "식비";
+        }
+
+        // 기타: 정의되지 않은 경우
+        return "기타";
+    }
+
+
+
     // 출금 처리
     @Transactional
     public String withdraw(List<PaymentResponseDTO> requests) {
@@ -107,9 +157,9 @@ public class AccountHistoryService {
                     .transactionDate(transactionDate)
                     .amount(withdrawalAmount)
                     .storeName(request.getProvider())
-                    .note(paymentKey) // PaymentKey를 Note에 저장
+                    .note(request.getOrderName()) // 아이템 이름 order_name
                     .fixedExpenses(false)
-                    .category("POS 출금")
+                    .category(filterCategoryByOrderName(request.getOrderName())) // 카테고리
                     .build();
             accountHistoryRepository.save(accountHistory);
 
@@ -147,7 +197,7 @@ public class AccountHistoryService {
                 continue; // 중복된 거래는 처리하지 않음
             }
 
-            // 입금 내역 생성 및 저장
+           /* // 입금 내역 생성 및 저장
             AccountHistory accountHistory = AccountHistory.builder()
                     .account(connectedAccount)
                     .transactionType("REVENUE")
@@ -159,7 +209,7 @@ public class AccountHistoryService {
                     .amount(depositAmount)
                     .storeName(request.getProductName())
                     .build();
-            accountHistoryRepository.save(accountHistory);
+            accountHistoryRepository.save(accountHistory);*/
 
             // 잔액 추가
             BigDecimal updatedBalance = connectedAccount.getBalance().add(depositAmount);
