@@ -197,7 +197,7 @@ public class AccountHistoryService {
                 continue; // 중복된 거래는 처리하지 않음
             }
 
-           /* // 입금 내역 생성 및 저장
+            // 입금 내역 생성 및 저장
             AccountHistory accountHistory = AccountHistory.builder()
                     .account(connectedAccount)
                     .transactionType("REVENUE")
@@ -209,7 +209,7 @@ public class AccountHistoryService {
                     .amount(depositAmount)
                     .storeName(request.getProductName())
                     .build();
-            accountHistoryRepository.save(accountHistory);*/
+            accountHistoryRepository.save(accountHistory);
 
             // 잔액 추가
             BigDecimal updatedBalance = connectedAccount.getBalance().add(depositAmount);
