@@ -16,7 +16,7 @@ spring:
   datasource:
     url: jdbc:mariadb://${DATABASE_HOST:localhost}:${DATABASE_PORT:3306}/bank_db?useSSL=false&useServerPrepStmts=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul
     username: ${DATABASE_USERNAME:root}
-    password: ${DATABASE_PASSWORD:root}
+    password: ${DATABASE_PASSWORD:1234}
     driver-class-name: org.mariadb.jdbc.Driver
 
   jpa:
