@@ -16,15 +16,15 @@ spring:
   datasource:
     url: jdbc:mariadb://${DATABASE_HOST:localhost}:${DATABASE_PORT:3306}/bank_db?useSSL=false&useServerPrepStmts=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul
     username: ${DATABASE_USERNAME:root}
-    password: ${DATABASE_PASSWORD:root}
+    password: ${DATABASE_PASSWORD:1234}
     driver-class-name: org.mariadb.jdbc.Driver
 
   jpa:
     defer-datasource-initialization: true
-    show-sql: true  # ??? SQL ?? ??
+    show-sql: false  # ??? SQL ?? ??
     properties:
       hibernate:
-        format_sql: true  # SQL? ?? ?? ???
+        format_sql: false  # SQL? ?? ?? ???
         dialect: org.hibernate.dialect.MariaDBDialect
         jdbc:
           batch_size: 50  # ? ?? ??? ??? ?
@@ -35,3 +35,8 @@ spring:
       ddl-auto: update
       naming:
         physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+
+pos:
+  api:
+    url: http:${POS_HOST:localhost}:8083
+
