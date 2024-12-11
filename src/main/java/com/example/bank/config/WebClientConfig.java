@@ -9,7 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class WebClientConfig {
 	
 	@Value("${pos.api.url}")
-	String posUrl;
+	private String posUrl;
 	
     @Bean(name = "webClient8083")
     WebClient webClient8083(WebClient.Builder builder) {
