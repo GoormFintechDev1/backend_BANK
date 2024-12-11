@@ -115,8 +115,6 @@ public class AccountHistoryService {
         return "기타";
     }
 
-
-
     // 출금 처리
     @Transactional
     public String withdraw(List<PaymentResponseDTO> requests) {
@@ -139,7 +137,6 @@ public class AccountHistoryService {
                     .fetchFirst() != null;
 
             if (exists) {
-                log.info("이미 처리된 거래입니다. PaymentKey: {}", paymentKey);
                 continue; // 중복된 거래는 처리하지 않음
             }
 
@@ -193,7 +190,6 @@ public class AccountHistoryService {
                     .fetchFirst() != null;
 
             if (exists) {
-                log.info("이미 처리된 거래입니다. TransactionDate: {}", transactionDate);
                 continue; // 중복된 거래는 처리하지 않음
             }
 
