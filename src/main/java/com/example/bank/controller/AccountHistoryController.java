@@ -7,13 +7,14 @@ import com.example.bank.model.AccountHistory;
 import com.example.bank.service.AccountHistoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.time.YearMonth;
 import java.util.List;
 
 
@@ -23,6 +24,8 @@ import java.util.List;
 @Slf4j
 public class AccountHistoryController {
     private final AccountHistoryService accountHistoryService;
+
+    @Qualifier("webClient8083")
     private final WebClient webClient;
 
 
@@ -56,12 +59,12 @@ public class AccountHistoryController {
 
     /////////// pos
     // pos에서 출금 연결 (10초마다 pos랑 연결)
-    @Scheduled(fixedRate = 10000)
+    // @Scheduled(fixedRate = 10000)
+    @Scheduled(cron = "0 */1 * * * *")
     public void withdraw(){
         // 외부 API 호출
-        String externalApiUrl = "http://localhost:8083/api/payments/send";
         List<PaymentResponseDTO> request = (List<PaymentResponseDTO>) webClient.post()
-                .uri(externalApiUrl)
+                .uri("/api/payments/send")
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<PaymentResponseDTO>>() {})
                 .block();
@@ -74,12 +77,12 @@ public class AccountHistoryController {
     }
 
     // 입금 (10초마다 pos랑 연결)
-    @Scheduled(fixedRate = 10000)
+    // @Scheduled(fixedRate = 10000)
+    @Scheduled(cron = "0 */1 * * * *")
     public void deposit() {
         // 외부 API 호출
-        String externalApiUrl = "http://localhost:8083/api/orders/all";
         List<OrderResponseDTO> request = (List<OrderResponseDTO>) webClient.get()
-                .uri(externalApiUrl)
+                .uri("/api/orders/all")
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<OrderResponseDTO>>() {})
                 .block();

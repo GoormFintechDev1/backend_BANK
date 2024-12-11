@@ -12,7 +12,7 @@ public class WebClientConfig {
 	String posUrl;
 	
     @Bean
-    WebClient webClient(WebClient.Builder builder) {
+    WebClient webClient8083(WebClient.Builder builder) {
         return builder
                 .baseUrl(posUrl) // 기본 URL 설정
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)) // 버퍼 크기 10MB로 확장
