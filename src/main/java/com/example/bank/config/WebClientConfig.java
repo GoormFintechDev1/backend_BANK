@@ -11,7 +11,7 @@ public class WebClientConfig {
 	@Value("${pos.api.url}")
 	String posUrl;
 	
-    @Bean
+    @Bean(name = "webClient8083")
     WebClient webClient8083(WebClient.Builder builder) {
         return builder
                 .baseUrl(posUrl) // 기본 URL 설정
