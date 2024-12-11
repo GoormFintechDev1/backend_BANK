@@ -38,5 +38,5 @@ spring:
 
 pos:
   api:
-    url: http:${POS_HOST:localhost}:8083
+    url: http:${POS_HOST:localhost}:${POS_PORT:8083}
 
