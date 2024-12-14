@@ -11,6 +11,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 .allowedOrigins(
                 		"http://localhost:3000",
+                        "http://ec2-54-180-115-242.ap-northeast-2.compute.amazonaws.com:3000"
                 		"http://localhost",
                 		"http://localhost:8080",
                 		"http://localhost:8083"
